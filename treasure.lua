@@ -1,4 +1,4 @@
-minetest.register_node("mymoney:treasure_chest", {
+core.register_node("mymoney:treasure_chest", {
     description = "Ancient Treasure Chest",
     tiles = {
         "default_chest_top.png", "default_chest_top.png",
@@ -15,10 +15,10 @@ minetest.register_node("mymoney:treasure_chest", {
         if inv:room_for_item("main", reward) then
             inv:add_item("main", reward)
 
-            minetest.sound_play("default_coins", {pos=pos, gain=1.5})
-            minetest.chat_send_all("*** " .. name .. " found an Ancient Treasure Chest containing 100 Gold! ***")
+            core.sound_play("default_coins", {pos=pos, gain=1.5})
+            core.chat_send_all("*** " .. name .. " found an Ancient Treasure Chest containing 100 Gold! ***")
 
-            minetest.add_particlespawner({
+            core.add_particlespawner({
                 amount = 40,
                 time = 0.5,
                 minpos = pos, maxpos = pos,
@@ -29,14 +29,14 @@ minetest.register_node("mymoney:treasure_chest", {
                 texture = "mymoney_coin_gold_1.png",
             })
 
-            minetest.remove_node(pos)
+            core.remove_node(pos)
         else
-            minetest.chat_send_player(name, "Your inventory is too full to take the treasure!")
+            core.chat_send_player(name, "Your inventory is too full to take the treasure!")
         end
     end,
 })
 
-minetest.register_decoration({
+core.register_decoration({
     deco_type = "simple",
     place_on = {"default:sand", "default:dirt_with_grass", "default:desert_sand"},
     sidelen = 16,

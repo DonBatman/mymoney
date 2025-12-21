@@ -13,11 +13,11 @@ dofile(core.get_modpath("mymoney").."/trade.lua")
 dofile(core.get_modpath("mymoney").."/exchange.lua")
 dofile(core.get_modpath("mymoney").."/jobs.lua")
 
-minetest.register_on_newplayer(function(player)
+core.register_on_newplayer(function(player)
     local inv = player:get_inventory()
     inv:add_item("main", "mymoney:atm_card")
     inv:add_item("main", "mymoney:coin_gold_10")
-    minetest.chat_send_player(player:get_player_name(), "Welcome! You have been issued a Bank Card and 10 Gold startup capital.")
+    core.chat_send_player(player:get_player_name(), "Welcome! You have been issued a Bank Card and 10 Gold startup capital.")
 end)
 
 core.register_node("mymoney:coin_gold_1",{

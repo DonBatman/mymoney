@@ -4,7 +4,7 @@ mymoney.current_shop = {}
 -- Helper to get a clean, short item description
 local function get_item_desc(itemname)
     if not itemname or itemname == "" then return "Empty" end
-    local def = minetest.registered_items[itemname]
+    local def = core.registered_items[itemname]
     if def and def.description then
         local desc = def.description:split("\n")[1]
         if #desc > 12 then return desc:sub(1, 10) .. ".." end
@@ -21,18 +21,18 @@ local function get_shop_bg(width, height)
 end
 
 local function show_sales_log(name, pos)
-    local meta = minetest.get_meta(pos)
+    local meta = core.get_meta(pos)
     local log = meta:get_string("sales_log")
     if log == "" then log = "No sales recorded yet." end
     
-    minetest.show_formspec(name, "mymoney:shop_log", get_shop_bg(7, 7.5) ..
+    core.show_formspec(name, "mymoney:shop_log", get_shop_bg(7, 7.5) ..
         "label[0.5,0.5;RECENT SALES LOG:]" ..
-        "textarea[0.5,1.2;6,5;log_text;;" .. minetest.formspec_escape(log) .. "]" ..
+        "textarea[0.5,1.2;6,5;log_text;;" .. core.formspec_escape(log) .. "]" ..
         "button[0.5,6.5;2,0.8;clear_log;Clear Log]" ..
         "button[4.5,6.5;2,0.8;back_to_shop;Back]")
 end
 
-minetest.register_node("mymoney:shop", {
+core.register_node("mymoney:shop", {
     description = "Universal Shop",
     drawtype = "mesh",
     mesh = "mymoney_shop.obj", 
@@ -43,7 +43,7 @@ minetest.register_node("mymoney:shop", {
     groups = {cracky=2},
 
     after_place_node = function(pos, placer)
-        local meta = minetest.get_meta(pos)
+        local meta = core.get_meta(pos)
         local inv = meta:get_inventory()
         meta:set_string("owner", placer:get_player_name())
         meta:set_string("infotext", "Shop (Owner: " .. placer:get_player_name() .. ")")
@@ -54,10 +54,10 @@ minetest.register_node("mymoney:shop", {
     end,
 
     can_dig = function(pos, player)
-        local meta = minetest.get_meta(pos)
+        local meta = core.get_meta(pos)
         local inv = meta:get_inventory()
         if not inv:is_empty("stock") or not inv:is_empty("prices") or not inv:is_empty("earnings") then
-            minetest.chat_send_player(player:get_player_name(), "Empty the Shop before digging!")
+            core.chat_send_player(player:get_player_name(), "Empty the Shop before digging!")
             return false
         end
         return true
@@ -65,13 +65,13 @@ minetest.register_node("mymoney:shop", {
 
     on_rightclick = function(pos, node, clicker)
         local name = clicker:get_player_name()
-        local meta = minetest.get_meta(pos)
+        local meta = core.get_meta(pos)
         local owner = meta:get_string("owner")
         local loc = "nodemeta:"..pos.x..","..pos.y..","..pos.z
         mymoney.current_shop[name] = pos 
 
         if name == owner and not clicker:get_player_control().aux1 then
-            minetest.show_formspec(name, "mymoney:shop_owner", get_shop_bg(10, 11.5) ..
+            core.show_formspec(name, "mymoney:shop_owner", get_shop_bg(10, 11.5) ..
                 "label[0.5,0.2;SHOP MANAGEMENT (Owner: "..owner..")]" ..
                 "label[1.5,0.8;STOCK]list["..loc..";stock;0.5,1.2;5,2;]" ..
                 "label[1.5,3.6;PRICES]list["..loc..";prices;0.5,4.0;5,2;]" ..
@@ -113,22 +113,22 @@ minetest.register_node("mymoney:shop", {
                 end
             end
             form = form .. "list[current_player;main;1,7.0;8,4;]"
-            minetest.show_formspec(name, "mymoney:shop_customer", form)
+            core.show_formspec(name, "mymoney:shop_customer", form)
         end
     end,
 })
 
 -- Purchase processing logic
-minetest.register_on_player_receive_fields(function(player, formname, fields)
+core.register_on_player_receive_fields(function(player, formname, fields)
     local name = player:get_player_name()
     local pos = mymoney.current_shop[name]
     if not pos or formname ~= "mymoney:shop_customer" then 
         -- Handles log logic separately
         if fields.view_log then show_sales_log(name, pos) end
-        if fields.clear_log then minetest.get_meta(pos):set_string("sales_log", "") show_sales_log(name, pos) end
+        if fields.clear_log then core.get_meta(pos):set_string("sales_log", "") show_sales_log(name, pos) end
         if fields.back_to_shop then 
-            local node = minetest.get_node(pos)
-            minetest.registered_nodes[node.name].on_rightclick(pos, node, player)
+            local node = core.get_node(pos)
+            core.registered_nodes[node.name].on_rightclick(pos, node, player)
         end
         return 
     end
@@ -137,14 +137,14 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
     for i = 1, 10 do if fields["buy_" .. i] then index = i break end end
     if not index then return end
 
-    local meta = minetest.get_meta(pos)
+    local meta = core.get_meta(pos)
     local inv = meta:get_inventory()
     local s_stack = inv:get_stack("stock", index)
     local p_stack = inv:get_stack("prices", index)
     local pinv = player:get_inventory()
 
     if s_stack:is_empty() or not pinv:contains_item("main", p_stack) or not pinv:room_for_item("main", ItemStack(s_stack:get_name())) then
-        minetest.chat_send_player(name, "Purchase failed!")
+        core.chat_send_player(name, "Purchase failed!")
         return
     end
 
@@ -158,13 +158,13 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
         local time = os.date("%H:%M")
         local history = meta:get_string("sales_log")
         meta:set_string("sales_log", "["..time.."] "..name.." bought "..get_item_desc(item_to_give:get_name()).."\n" .. history)
-        minetest.sound_play("default_place_node", {pos=pos, gain=1.0})
+        core.sound_play("default_place_node", {pos=pos, gain=1.0})
     end
 
-    local node = minetest.get_node(pos)
-    minetest.registered_nodes[node.name].on_rightclick(pos, node, player)
+    local node = core.get_node(pos)
+    core.registered_nodes[node.name].on_rightclick(pos, node, player)
 end)
-minetest.register_craft({
+core.register_craft({
     output = "mymoney:shop",
     recipe = {
         {"default:obsidian",    "default:glass",         "default:obsidian"},

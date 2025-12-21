@@ -4,7 +4,7 @@ local function get_coin_maker_bg(width, height)
         "gui_bg[;listcolors[#444444ff;#555555ff;#222222ff;#33cc33ff;#cc3333ff]]"
 end
 
-minetest.register_node("mymoney:coin_maker", {
+core.register_node("mymoney:coin_maker", {
     description = "Industrial Coin Maker",
     tiles = {
         "mymoney_coin_maker.png"
@@ -15,7 +15,7 @@ minetest.register_node("mymoney:coin_maker", {
     groups = {cracky=2, oddly_breakable_by_hand=1},
 
     on_construct = function(pos)
-        local meta = minetest.get_meta(pos)
+        local meta = core.get_meta(pos)
         local inv = meta:get_inventory()
         inv:set_size("input", 1)
         inv:set_size("output", 4)
@@ -24,9 +24,9 @@ minetest.register_node("mymoney:coin_maker", {
     end,
 
     can_dig = function(pos, player)
-        local inv = minetest.get_meta(pos):get_inventory()
+        local inv = core.get_meta(pos):get_inventory()
         if not inv:is_empty("input") or not inv:is_empty("output") then
-            minetest.chat_send_player(player:get_player_name(), "Empty the machine before digging!")
+            core.chat_send_player(player:get_player_name(), "Empty the machine before digging!")
             return false
         end
         return true
@@ -35,7 +35,7 @@ minetest.register_node("mymoney:coin_maker", {
     on_rightclick = function(pos, node, clicker)
         local name = clicker:get_player_name()
         local loc = "nodemeta:"..pos.x..","..pos.y..","..pos.z
-        local meta = minetest.get_meta(pos)
+        local meta = core.get_meta(pos)
         local timer = meta:get_int("timer")
         
         local status = "Status: Idle"
@@ -43,7 +43,7 @@ minetest.register_node("mymoney:coin_maker", {
             status = "Status: Minting... (" .. timer .. "s left)"
         end
 
-        minetest.show_formspec(name, "mymoney:coin_maker_fs",
+        core.show_formspec(name, "mymoney:coin_maker_fs",
             get_coin_maker_bg(10, 10) ..
             "label[1.5,0.5;COIN MINTING UNIT]" ..
             "label[1.5,1.2;Input (Ingots):]" ..
@@ -60,13 +60,13 @@ minetest.register_node("mymoney:coin_maker", {
     end,
 })
 
-minetest.register_abm({
+core.register_abm({
     label = "Coin Minting Process",
     nodenames = {"mymoney:coin_maker"},
     interval = 1,
     chance = 1,
     action = function(pos)
-        local meta = minetest.get_meta(pos)
+        local meta = core.get_meta(pos)
         local inv = meta:get_inventory()
         local input = inv:get_stack("input", 1)
         local timer = meta:get_int("timer")
@@ -80,7 +80,7 @@ minetest.register_abm({
                 local res_item = meta:get_string("craft_result")
                 inv:add_item("output", ItemStack(res_item .. " 10"))
                 meta:set_string("infotext", "Minting Complete!")
-                minetest.sound_play("default_cool_lava", {pos=pos, gain=0.5})
+                core.sound_play("default_cool_lava", {pos=pos, gain=0.5})
             end
         else
             if not input:is_empty() and inv:room_for_item("output", "mymoney:coin_gold_1 10") then
@@ -98,13 +98,13 @@ minetest.register_abm({
                     inv:set_stack("input", 1, input)
                     meta:set_int("timer", 120)
                     meta:set_string("craft_result", result)
-                    minetest.sound_play("default_place_node_metal", {pos=pos, gain=1.0})
+                    core.sound_play("default_place_node_metal", {pos=pos, gain=1.0})
                 end
             end
         end
     end,
 })
-minetest.register_craft({
+core.register_craft({
     output = "mymoney:coin_maker",
     recipe = {
         {"default:steel_ingot", "default:steel_ingot",  "default:steel_ingot"},

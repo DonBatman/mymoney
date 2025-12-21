@@ -36,7 +36,7 @@ local function update_atm_formspec(player, pos)
         "listring["..slot_loc..";deposit]listring[current_player;main]"
 end
 
-minetest.register_node("mymoney:atm", {
+core.register_node("mymoney:atm", {
     description = "Bank ATM",
     tiles = {
         "mymoney_atm.png"
@@ -51,13 +51,13 @@ minetest.register_node("mymoney:atm", {
     groups = {cracky=3, oddly_breakable_by_hand=1},
     
     on_construct = function(pos)
-        local meta = minetest.get_meta(pos)
+        local meta = core.get_meta(pos)
         meta:get_inventory():set_size("deposit", 1)
         meta:set_string("infotext", "ATM (Personal Bank)")
     end,
 
     on_rightclick = function(pos, node, clicker)
-        minetest.show_formspec(clicker:get_player_name(), "mymoney:atm_fs", update_atm_formspec(clicker, pos))
+        core.show_formspec(clicker:get_player_name(), "mymoney:atm_fs", update_atm_formspec(clicker, pos))
         mymoney.shop.current_shop[clicker:get_player_name()] = pos 
     end,
 
@@ -89,16 +89,16 @@ minetest.register_node("mymoney:atm", {
                 local bal = p_meta:get_int(bal_key)
                 p_meta:set_int(bal_key, bal + value)
                 
-                minetest.get_meta(pos):get_inventory():set_stack("deposit", 1, nil)
+                core.get_meta(pos):get_inventory():set_stack("deposit", 1, nil)
                 
-                minetest.sound_play("default_coins", {to_player=player:get_player_name(), gain=1.0})
-                minetest.show_formspec(player:get_player_name(), "mymoney:atm_fs", update_atm_formspec(player, pos))
+                core.sound_play("default_coins", {to_player=player:get_player_name(), gain=1.0})
+                core.show_formspec(player:get_player_name(), "mymoney:atm_fs", update_atm_formspec(player, pos))
             end
         end
     end,
 })
 
-minetest.register_on_player_receive_fields(function(player, formname, fields)
+core.register_on_player_receive_fields(function(player, formname, fields)
     if formname ~= "mymoney:atm_fs" or fields.quit then return end
 
     local name = player:get_player_name()
@@ -117,13 +117,13 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
             if pinv:room_for_item("main", item) then
                 p_meta:set_int(bal_key, current_bal - cost)
                 pinv:add_item("main", item)
-                minetest.sound_play("default_place_node_metal", {to_player=name, gain=0.5})
+                core.sound_play("default_place_node_metal", {to_player=name, gain=0.5})
                 action_taken = true
             else
-                minetest.chat_send_player(name, "Inventory full!")
+                core.chat_send_player(name, "Inventory full!")
             end
         else
-            minetest.chat_send_player(name, "Insufficient " .. type .. " funds!")
+            core.chat_send_player(name, "Insufficient " .. type .. " funds!")
         end
     end
 
@@ -135,31 +135,31 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
     if fields.get_s10 then withdraw("silver", 10, "mymoney:coin_silver_10") end
 
     if action_taken then
-        minetest.show_formspec(name, "mymoney:atm_fs", update_atm_formspec(player, pos))
+        core.show_formspec(name, "mymoney:atm_fs", update_atm_formspec(player, pos))
     end
 end)
 
-minetest.register_craftitem("mymoney:atm_card", {
+core.register_craftitem("mymoney:atm_card", {
 	description = "Bank ATM Card\nRequired to access ATM machines",
 	inventory_image = "mymoney_debit_card.png",
 })
 
-minetest.register_craft({
+core.register_craft({
 	output = "mymoney:atm_card",
 	recipe = {
 		{"default:steel_ingot", "mymoney:coin_gold_1", "default:steel_ingot"},
 	}
 })
 
-local old_on_rightclick = minetest.registered_nodes["mymoney:atm"].on_rightclick
+local old_on_rightclick = core.registered_nodes["mymoney:atm"].on_rightclick
 
-minetest.override_item("mymoney:atm", {
+core.override_item("mymoney:atm", {
 	on_rightclick = function(pos, node, clicker, itemstack)
 		local name = clicker:get_player_name()
 		local inv = clicker:get_inventory()
 
 		if not inv:contains_item("main", "mymoney:atm_card") then
-			minetest.chat_send_player(name, "Error: You need an ATM Card in your inventory to use this machine!")
+			core.chat_send_player(name, "Error: You need an ATM Card in your inventory to use this machine!")
 			return
 		end
 
@@ -169,7 +169,7 @@ minetest.override_item("mymoney:atm", {
 			local w_inv_raw = w_meta:get_string("inventory")
 			
 			if w_inv_raw ~= "" then
-				local w_list = minetest.deserialize(w_inv_raw) or {}
+				local w_list = core.deserialize(w_inv_raw) or {}
 				local p_meta = clicker:get_meta()
 				local gold_added = 0
 				local silver_added = 0
@@ -202,20 +202,20 @@ minetest.override_item("mymoney:atm", {
 					p_meta:set_int("mymoney:gold_bal", p_meta:get_int("mymoney:gold_bal") + gold_added)
 					p_meta:set_int("mymoney:silver_bal", p_meta:get_int("mymoney:silver_bal") + silver_added)
 					
-					w_meta:set_string("inventory", minetest.serialize(new_w_list))
+					w_meta:set_string("inventory", core.serialize(new_w_list))
 					clicker:set_wielded_item(held_item)
 					
-					minetest.chat_send_player(name, "Wallet emptied! Deposited " .. gold_added .. "g and " .. silver_added .. "s.")
-					minetest.sound_play("default_coins", {to_player=name, gain=1.0})
+					core.chat_send_player(name, "Wallet emptied! Deposited " .. gold_added .. "g and " .. silver_added .. "s.")
+					core.sound_play("default_coins", {to_player=name, gain=1.0})
 				end
 			end
 		end
 
-		minetest.show_formspec(name, "mymoney:atm_fs", update_atm_formspec(clicker, pos))
+		core.show_formspec(name, "mymoney:atm_fs", update_atm_formspec(clicker, pos))
 		mymoney.shop.current_shop[name] = pos
 	end,
 })
-minetest.register_craft({
+core.register_craft({
     output = "mymoney:exchange",
     recipe = {
         {"default:steel_ingot", "default:glass",       "default:steel_ingot"},
@@ -223,7 +223,7 @@ minetest.register_craft({
         {"default:copper_ingot", "default:steel_ingot", "default:copper_ingot"},
     }
 })
-minetest.register_craft({
+core.register_craft({
     output = "mymoney:atm_card",
     recipe = {
         {"", "default:paper", ""},

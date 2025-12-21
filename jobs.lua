@@ -1,4 +1,4 @@
-minetest.register_node("mymoney:job_board", {
+core.register_node("mymoney:job_board", {
     description = "Job Board (Bounty Node)",
     tiles = {"mymoney_jobs.png"},
     drawtype = "mesh",
@@ -7,7 +7,7 @@ minetest.register_node("mymoney:job_board", {
     groups = {cracky=2},
 
     after_place_node = function(pos, placer)
-        local meta = minetest.get_meta(pos)
+        local meta = core.get_meta(pos)
         local inv = meta:get_inventory()
         meta:set_string("owner", placer:get_player_name())
         meta:set_string("infotext", "Job Board (Owner: " .. placer:get_player_name() .. ")")
@@ -17,47 +17,47 @@ minetest.register_node("mymoney:job_board", {
     end,
 
     can_dig = function(pos, player)
-        local meta = minetest.get_meta(pos)
+        local meta = core.get_meta(pos)
         local inv = meta:get_inventory()
         local name = player:get_player_name()
         local owner = meta:get_string("owner")
 
-        if name ~= owner and not minetest.check_player_privs(name, {protection_bypass=true}) then
-            minetest.chat_send_player(name, "Only the owner ("..owner..") can dig this!")
+        if name ~= owner and not core.check_player_privs(name, {protection_bypass=true}) then
+            core.chat_send_player(name, "Only the owner ("..owner..") can dig this!")
             return false
         end
 
         if not inv:is_empty("reward_pool") or 
            not inv:is_empty("request_slot") or 
            not inv:is_empty("delivery_bin") then
-            minetest.chat_send_player(name, "Clear the rewards, request, and delivery bin before digging!")
+            core.chat_send_player(name, "Clear the rewards, request, and delivery bin before digging!")
             return false
         end
         return true
     end,
 
     allow_metadata_inventory_put = function(pos, listname, index, stack, player)
-        if player:get_player_name() == minetest.get_meta(pos):get_string("owner") then return stack:get_count() end
+        if player:get_player_name() == core.get_meta(pos):get_string("owner") then return stack:get_count() end
         return 0
     end,
     allow_metadata_inventory_take = function(pos, listname, index, stack, player)
-        if player:get_player_name() == minetest.get_meta(pos):get_string("owner") then return stack:get_count() end
+        if player:get_player_name() == core.get_meta(pos):get_string("owner") then return stack:get_count() end
         return 0
     end,
     allow_metadata_inventory_move = function(pos, from_list, from_index, to_list, to_index, count, player)
-        if player:get_player_name() == minetest.get_meta(pos):get_string("owner") then return count end
+        if player:get_player_name() == core.get_meta(pos):get_string("owner") then return count end
         return 0
     end,
 
     on_rightclick = function(pos, node, clicker)
         local name = clicker:get_player_name()
-        local meta = minetest.get_meta(pos)
+        local meta = core.get_meta(pos)
         local owner = meta:get_string("owner")
         local loc = "nodemeta:"..pos.x..","..pos.y..","..pos.z
         local inv = meta:get_inventory()
 
         if name == owner then
-            minetest.show_formspec(name, "mymoney:job_setup", 
+            core.show_formspec(name, "mymoney:job_setup", 
                 "size[9,10.5]bgcolor-[#2b2b2bff;true]" ..
                 "label[1,0.2;JOB SETUP (Owner View)]" ..
                 "label[1,0.8;1. REWARD COINS (Payment)]" ..
@@ -95,11 +95,11 @@ minetest.register_node("mymoney:job_board", {
             end
             
             form = form .. "list[current_player;main;0,4.5;8,1;]"
-            minetest.show_formspec(name, "mymoney:job_worker", form)
+            core.show_formspec(name, "mymoney:job_worker", form)
         end
     end,
 })
-minetest.register_craft({
+core.register_craft({
     output = "mymoney:job_board",
     recipe = {
         {"group:wood", "default:paper", "group:wood"},

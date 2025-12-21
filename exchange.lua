@@ -4,7 +4,7 @@ local function get_exchange_bg()
            "label[1,0.8;--- SILVER COINS ---]label[6.5,0.8;--- GOLD COINS ---]"
 end
 
-minetest.register_node("mymoney:exchange", {
+core.register_node("mymoney:exchange", {
     description = "Currency Exchange Machine",
     tiles = {
         "mymoney_exchange.png"
@@ -48,11 +48,11 @@ minetest.register_node("mymoney:exchange", {
 
             "list[current_player;main;1,8.5;8,1;]"
             
-        minetest.show_formspec(name, "mymoney:exchange_ui", form)
+        core.show_formspec(name, "mymoney:exchange_ui", form)
     end,
 })
 
-minetest.register_on_player_receive_fields(function(player, formname, fields)
+core.register_on_player_receive_fields(function(player, formname, fields)
     if formname ~= "mymoney:exchange_ui" then return end
     local inv = player:get_inventory()
     local name = player:get_player_name()
@@ -63,12 +63,12 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
             if inv:room_for_item("main", give_item .. " " .. give_count) then
                 inv:remove_item("main", take_item .. " " .. take_count)
                 inv:add_item("main", give_item .. " " .. give_count)
-                minetest.sound_play(sound, {to_player=name, gain=1.0})
+                core.sound_play(sound, {to_player=name, gain=1.0})
             else
-                minetest.chat_send_player(name, "Inventory full!")
+                core.chat_send_player(name, "Inventory full!")
             end
         else
-            minetest.chat_send_player(name, "You don't have enough coins!")
+            core.chat_send_player(name, "You don't have enough coins!")
         end
     end
 
@@ -84,7 +84,7 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
     elseif fields.g1_to_s10 then swap("mymoney:coin_gold_1", 1, "mymoney:coin_silver_10", 10)
     end
 end)
-minetest.register_craft({
+core.register_craft({
     output = "mymoney:exchange",
     recipe = {
         {"default:steel_ingot", "mymoney:coin_gold_1", "default:steel_ingot"},

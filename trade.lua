@@ -9,8 +9,8 @@ end
 local function abort_trade(p1_name, p2_name)
     local names = {p1_name, p2_name}
     for _, name in ipairs(names) do
-        local inv = minetest.get_inventory({type="detached", name="trade_"..name})
-        local player = minetest.get_player_by_name(name)
+        local inv = core.get_inventory({type="detached", name="trade_"..name})
+        local player = core.get_player_by_name(name)
         if inv and player then
             for i=1, inv:get_size("main") do
                 local stack = inv:get_stack("main", i)
@@ -19,7 +19,7 @@ local function abort_trade(p1_name, p2_name)
                 end
             end
         end
-        minetest.close_formspec(name, "mymoney:trade_ui")
+        core.close_formspec(name, "mymoney:trade_ui")
         trading_sessions[name] = nil
     end
 end
@@ -44,11 +44,11 @@ local function update_trade_formspec(player_name)
             ((s.p1_locked and s.p2_locked) and "button[5.5,5.8;2,0.8;confirm;#00FF00CONFIRM]" or "")
     end
 
-    minetest.show_formspec(s.p1, "mymoney:trade_ui", get_form(s.p1, s.p2, p1_lock, p2_lock))
-    minetest.show_formspec(s.p2, "mymoney:trade_ui", get_form(s.p2, s.p1, p2_lock, p1_lock))
+    core.show_formspec(s.p1, "mymoney:trade_ui", get_form(s.p1, s.p2, p1_lock, p2_lock))
+    core.show_formspec(s.p2, "mymoney:trade_ui", get_form(s.p2, s.p1, p2_lock, p1_lock))
 end
 
-minetest.register_node("mymoney:trade_table", {
+core.register_node("mymoney:trade_table", {
     description = "Secure Trading Table",
     tiles = {"mymoney_trade_table.png"},
     drawtype = "mesh",
@@ -64,7 +64,7 @@ minetest.register_node("mymoney:trade_table", {
         
         if trading_sessions[name] then return end
 
-        local objs = minetest.get_objects_inside_radius(pos, 3)
+        local objs = core.get_objects_inside_radius(pos, 3)
         local target = nil
         
         for _, obj in pairs(objs) do
@@ -73,12 +73,12 @@ minetest.register_node("mymoney:trade_table", {
         end
 
         if not target then
-            minetest.chat_send_player(name, "You need a partner nearby to trade!")
+            core.chat_send_player(name, "You need a partner nearby to trade!")
             return
         end
 
         local function setup_inv(pname)
-            local inv = minetest.create_detached_inventory("trade_"..pname, {
+            local inv = core.create_detached_inventory("trade_"..pname, {
                 allow_put = function(inv, listname, index, stack, player)
                     local sess = trading_sessions[pname]
                     if sess and (sess.p1_locked or sess.p2_locked) then return 0 end
@@ -97,20 +97,20 @@ minetest.register_node("mymoney:trade_table", {
         trading_sessions[name] = {p1=name, p2=target, p1_locked=false, p2_locked=false, pos=pos}
         trading_sessions[target] = trading_sessions[name]
         
-        minetest.chat_send_player(target, name .. " wants to trade with you!")
+        core.chat_send_player(target, name .. " wants to trade with you!")
         update_trade_formspec(name)
     end,
 })
 
 local timer = 0
-minetest.register_globalstep(function(dtime)
+core.register_globalstep(function(dtime)
     timer = timer + dtime
     if timer < 1 then return end
     timer = 0
     for name, s in pairs(trading_sessions) do
         if s.p1 == name then
-            local p1 = minetest.get_player_by_name(s.p1)
-            local p2 = minetest.get_player_by_name(s.p2)
+            local p1 = core.get_player_by_name(s.p1)
+            local p2 = core.get_player_by_name(s.p2)
             if not p1 or not p2 or p1:get_pos():distance(s.pos) > 5 or p2:get_pos():distance(s.pos) > 5 then
                 abort_trade(s.p1, s.p2)
             end
@@ -118,7 +118,7 @@ minetest.register_globalstep(function(dtime)
     end
 end)
 
-minetest.register_on_player_receive_fields(function(player, formname, fields)
+core.register_on_player_receive_fields(function(player, formname, fields)
     if formname ~= "mymoney:trade_ui" then return end
     local name = player:get_player_name()
     local s = trading_sessions[name]
@@ -127,14 +127,14 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
     if fields.cancel then
         abort_trade(s.p1, s.p2)
     elseif fields.lock then
-        minetest.sound_play("default_click", {to_player=name, gain=0.5})
+        core.sound_play("default_click", {to_player=name, gain=0.5})
         if s.p1 == name then s.p1_locked = not s.p1_locked else s.p2_locked = not s.p2_locked end
         update_trade_formspec(name)
     elseif fields.confirm then
-        local inv1 = minetest.get_inventory({type="detached", name="trade_"..s.p1})
-        local inv2 = minetest.get_inventory({type="detached", name="trade_"..s.p2})
-        local p1o = minetest.get_player_by_name(s.p1)
-        local p2o = minetest.get_player_by_name(s.p2)
+        local inv1 = core.get_inventory({type="detached", name="trade_"..s.p1})
+        local inv2 = core.get_inventory({type="detached", name="trade_"..s.p2})
+        local p1o = core.get_player_by_name(s.p1)
+        local p2o = core.get_player_by_name(s.p2)
 
         for i=1,16 do
             p1o:get_inventory():add_item("main", inv2:get_stack("main", i))
@@ -143,15 +143,15 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
         
         trading_sessions[s.p1] = nil
         trading_sessions[s.p2] = nil
-        minetest.close_formspec(s.p1, "")
-        minetest.close_formspec(s.p2, "")
+        core.close_formspec(s.p1, "")
+        core.close_formspec(s.p2, "")
         
-        minetest.sound_play("default_place_node", {pos=s.pos, gain=1.0})
-        minetest.chat_send_player(s.p1, "Trade completed successfully!")
-        minetest.chat_send_player(s.p2, "Trade completed successfully!")
+        core.sound_play("default_place_node", {pos=s.pos, gain=1.0})
+        core.chat_send_player(s.p1, "Trade completed successfully!")
+        core.chat_send_player(s.p2, "Trade completed successfully!")
     end
 end)
-minetest.register_craft({
+core.register_craft({
     output = "mymoney:trade_table",
     recipe = {
         {"group:wood", "group:wood",          "group:wood"},

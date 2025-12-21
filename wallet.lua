@@ -5,7 +5,7 @@ local function get_wallet_bg(width, height)
         "background[0,0;"..width..","..height..";mymoney_background.png;true]"
 end
 
-minetest.register_tool("mymoney:wallet", {
+core.register_tool("mymoney:wallet", {
     description = "Leather Wallet\n(Right-click to open)",
     inventory_image = "mymoney_wallet.png",
     stack_max = 1,
@@ -13,14 +13,14 @@ minetest.register_tool("mymoney:wallet", {
         local name = placer:get_player_name()
         local meta = itemstack:get_meta()
     if pointed_thing.type == "node" then
-        local node = minetest.get_node(pointed_thing.under)
+        local node = core.get_node(pointed_thing.under)
         if node.name == "mymoney:atm" then
             local name = placer:get_player_name()
             local meta = itemstack:get_meta()
             local inv_raw = meta:get_string("inventory")
             
             if inv_raw ~= "" then
-                local list = minetest.deserialize(inv_raw) or {}
+                local list = core.deserialize(inv_raw) or {}
                 local p_meta = placer:get_meta()
                 local gold_added = 0
                 local silver_added = 0
@@ -49,9 +49,9 @@ minetest.register_tool("mymoney:wallet", {
                     p_meta:set_int("mymoney:gold_bal", p_meta:get_int("mymoney:gold_bal") + gold_added)
                     p_meta:set_int("mymoney:silver_bal", p_meta:get_int("mymoney:silver_bal") + silver_added)
                     
-                    meta:set_string("inventory", minetest.serialize(new_list))
-                    minetest.chat_send_player(name, "ATM: Wallet emptied! Gold: +"..gold_added.." Silver: +"..silver_added)
-                    minetest.sound_play("default_coins", {to_player=name, gain=1.0})
+                    meta:set_string("inventory", core.serialize(new_list))
+                    core.chat_send_player(name, "ATM: Wallet emptied! Gold: +"..gold_added.." Silver: +"..silver_added)
+                    core.sound_play("default_coins", {to_player=name, gain=1.0})
                     return itemstack
                 end
             end
@@ -66,7 +66,7 @@ minetest.register_tool("mymoney:wallet", {
         local wallet_id = meta:get_string("wallet_id")
         local inv_name = "detached:wallet_" .. wallet_id
 
-        local inv = minetest.create_detached_inventory("wallet_" .. wallet_id, {
+        local inv = core.create_detached_inventory("wallet_" .. wallet_id, {
             allow_put = function(inv, listname, index, stack, player)
                 if stack:get_name():find("mymoney:coin_") then
                     return stack:get_count()
@@ -77,26 +77,26 @@ minetest.register_tool("mymoney:wallet", {
                 local list = inv:get_list("main")
                 local serialized = {}
                 for _, s in ipairs(list) do table.insert(serialized, s:to_string()) end
-                meta:set_string("inventory", minetest.serialize(serialized))
+                meta:set_string("inventory", core.serialize(serialized))
                 placer:set_wielded_item(itemstack)
             end,
             on_take = function(inv, listname, index, stack, player)
                 local list = inv:get_list("main")
                 local serialized = {}
                 for _, s in ipairs(list) do table.insert(serialized, s:to_string()) end
-                meta:set_string("inventory", minetest.serialize(serialized))
+                meta:set_string("inventory", core.serialize(serialized))
                 placer:set_wielded_item(itemstack)
             end,
         })
 
         inv:set_size("main", 16)
 
-        local saved_inv = minetest.deserialize(meta:get_string("inventory")) or {}
+        local saved_inv = core.deserialize(meta:get_string("inventory")) or {}
         for i, itemstring in ipairs(saved_inv) do
             inv:set_stack("main", i, ItemStack(itemstring))
         end
 
-        minetest.show_formspec(name, "mymoney:wallet_fs",
+        core.show_formspec(name, "mymoney:wallet_fs",
             get_wallet_bg(9, 10) ..
             "label[0.5,0.5;WALLET (16 Slots - Coins Only):]" ..
             "list[" .. inv_name .. ";main;0.5,1;8,2;]"..
@@ -108,7 +108,7 @@ minetest.register_tool("mymoney:wallet", {
         return itemstack
     end,
 })
-minetest.register_craft({
+core.register_craft({
     output = "mymoney:wallet",
     recipe = {
         {"wool:brown", "default:string", "wool:brown"},
