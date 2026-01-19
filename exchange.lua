@@ -4,7 +4,7 @@ local function get_exchange_bg()
            "label[1,0.8;--- SILVER COINS ---]label[6.5,0.8;--- GOLD COINS ---]"
 end
 
-core.register_node("mymoney:exchange", {
+minetest.register_node("mymoney:exchange", {
     description = "Currency Exchange Machine",
     tiles = {
         "mymoney_exchange.png"
@@ -48,11 +48,11 @@ core.register_node("mymoney:exchange", {
 
             "list[current_player;main;1,8.5;8,1;]"
             
-        core.show_formspec(name, "mymoney:exchange_ui", form)
+        minetest.show_formspec(name, "mymoney:exchange_ui", form)
     end,
 })
 
-core.register_on_player_receive_fields(function(player, formname, fields)
+minetest.register_on_player_receive_fields(function(player, formname, fields)
     if formname ~= "mymoney:exchange_ui" then return end
     local inv = player:get_inventory()
     local name = player:get_player_name()
@@ -63,12 +63,12 @@ core.register_on_player_receive_fields(function(player, formname, fields)
             if inv:room_for_item("main", give_item .. " " .. give_count) then
                 inv:remove_item("main", take_item .. " " .. take_count)
                 inv:add_item("main", give_item .. " " .. give_count)
-                core.sound_play(sound, {to_player=name, gain=1.0})
+                minetest.sound_play(sound, {to_player=name, gain=1.0})
             else
-                core.chat_send_player(name, "Inventory full!")
+                minetest.chat_send_player(name, "Inventory full!")
             end
         else
-            core.chat_send_player(name, "You don't have enough coins!")
+            minetest.chat_send_player(name, "You don't have enough coins!")
         end
     end
 
@@ -84,7 +84,7 @@ core.register_on_player_receive_fields(function(player, formname, fields)
     elseif fields.g1_to_s10 then swap("mymoney:coin_gold_1", 1, "mymoney:coin_silver_10", 10)
     end
 end)
-core.register_craft({
+minetest.register_craft({
     output = "mymoney:exchange",
     recipe = {
         {"default:steel_ingot", "mymoney:coin_gold_1", "default:steel_ingot"},

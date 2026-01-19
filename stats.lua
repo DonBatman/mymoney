@@ -1,4 +1,4 @@
-local stats_file = core.get_worldpath() .. "/mymoney_stats.txt"
+local stats_file = minetest.get_worldpath() .. "/mymoney_stats.txt"
 mymoney.stats = {
     total_sales = 0,
     total_bank_wealth = 0,
@@ -9,7 +9,7 @@ mymoney.stats = {
 local function save_stats()
     local f = io.open(stats_file, "w")
     if f then
-        f:write(core.serialize(mymoney.stats))
+        f:write(minetest.serialize(mymoney.stats))
         f:close()
     end
 end
@@ -20,7 +20,7 @@ local function load_stats()
         local data = f:read("*all")
         f:close()
         if data then
-            mymoney.stats = core.deserialize(data) or mymoney.stats
+            mymoney.stats = minetest.deserialize(data) or mymoney.stats
         end
     end
 end
@@ -46,12 +46,12 @@ function mymoney.log_transaction(item_name)
     save_stats()
 end
 
-core.register_chatcommand("money_stats", {
+minetest.register_chatcommand("money_stats", {
     privs = {server = true},
     description = "Show server economic statistics",
     func = function(name)
         local total_wealth = 0
-        for _, player in ipairs(core.get_connected_players()) do
+        for _, player in ipairs(minetest.get_connected_players()) do
             local meta = player:get_meta()
             total_wealth = total_wealth + meta:get_int("mymoney:gold_bal")
             total_wealth = total_wealth + meta:get_int("mymoney:silver_bal")

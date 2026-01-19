@@ -12,12 +12,13 @@ dofile(core.get_modpath("mymoney").."/stats.lua")
 dofile(core.get_modpath("mymoney").."/trade.lua")
 dofile(core.get_modpath("mymoney").."/exchange.lua")
 dofile(core.get_modpath("mymoney").."/jobs.lua")
+dofile(core.get_modpath("mymoney").."/admin_store.lua")
 
-core.register_on_newplayer(function(player)
+minetest.register_on_newplayer(function(player)
     local inv = player:get_inventory()
     inv:add_item("main", "mymoney:atm_card")
     inv:add_item("main", "mymoney:coin_gold_10")
-    core.chat_send_player(player:get_player_name(), "Welcome! You have been issued a Bank Card and 10 Gold startup capital.")
+    minetest.chat_send_player(player:get_player_name(), "Welcome! You have been issued a Bank Card and 10 Gold startup capital.")
 end)
 
 core.register_node("mymoney:coin_gold_1",{
@@ -116,3 +117,20 @@ core.register_node("mymoney:coin_silver_10",{
 		type = "fixed",
 		fixed = {{-0.4, -0.5, -0.4, 0.4, -0.4, 0.4}}},
 })
+
+if core.get_modpath("lucky_block") then
+	lucky_block:add_blocks({
+		{"dro", {"mymoney:coin_gold_1"}, 100},
+		{"dro", {"mymoney:coin_gold_5"}, 25},
+		{"dro", {"mymoney:coin_gold_10"}, 10},
+		{"dro", {"mymoney:coin_silver_1"}, 100},
+		{"dro", {"mymoney:coin_gold_5"}, 25},
+		{"dro", {"mymoney:coin_gold_10"}, 10},
+		{"dro", {"mymoney:coin_maker"}, 1},
+		{"dro", {"mymoney:job_board"}, 1},
+		{"dro", {"mymoney:shop"}, 1},
+		{"dro", {"mymoney:trade_table"}, 1},
+		{"dro", {"mymoney:vending"}, 1},
+		{"dro", {"mymoney:wallet"}, 1},
+	})
+end

@@ -1,10 +1,9 @@
 if not mymoney then mymoney = {} end
 mymoney.current_shop = {}
 
--- Helper to get a clean, short item description
 local function get_item_desc(itemname)
     if not itemname or itemname == "" then return "Empty" end
-    local def = core.registered_items[itemname]
+    local def = minetest.registered_items[itemname]
     if def and def.description then
         local desc = def.description:split("\n")[1]
         if #desc > 12 then return desc:sub(1, 10) .. ".." end
@@ -21,18 +20,18 @@ local function get_shop_bg(width, height)
 end
 
 local function show_sales_log(name, pos)
-    local meta = core.get_meta(pos)
+    local meta = minetest.get_meta(pos)
     local log = meta:get_string("sales_log")
     if log == "" then log = "No sales recorded yet." end
     
-    core.show_formspec(name, "mymoney:shop_log", get_shop_bg(7, 7.5) ..
+    minetest.show_formspec(name, "mymoney:shop_log", get_shop_bg(7, 7.5) ..
         "label[0.5,0.5;RECENT SALES LOG:]" ..
-        "textarea[0.5,1.2;6,5;log_text;;" .. core.formspec_escape(log) .. "]" ..
+        "textarea[0.5,1.2;6,5;log_text;;" .. minetest.formspec_escape(log) .. "]" ..
         "button[0.5,6.5;2,0.8;clear_log;Clear Log]" ..
         "button[4.5,6.5;2,0.8;back_to_shop;Back]")
 end
 
-core.register_node("mymoney:shop", {
+minetest.register_node("mymoney:shop", {
     description = "Universal Shop",
     drawtype = "mesh",
     mesh = "mymoney_shop.obj", 
@@ -43,7 +42,7 @@ core.register_node("mymoney:shop", {
     groups = {cracky=2},
 
     after_place_node = function(pos, placer)
-        local meta = core.get_meta(pos)
+        local meta = minetest.get_meta(pos)
         local inv = meta:get_inventory()
         meta:set_string("owner", placer:get_player_name())
         meta:set_string("infotext", "Shop (Owner: " .. placer:get_player_name() .. ")")
@@ -54,10 +53,10 @@ core.register_node("mymoney:shop", {
     end,
 
     can_dig = function(pos, player)
-        local meta = core.get_meta(pos)
+        local meta = minetest.get_meta(pos)
         local inv = meta:get_inventory()
         if not inv:is_empty("stock") or not inv:is_empty("prices") or not inv:is_empty("earnings") then
-            core.chat_send_player(player:get_player_name(), "Empty the Shop before digging!")
+            minetest.chat_send_player(player:get_player_name(), "Empty the Shop before digging!")
             return false
         end
         return true
@@ -65,13 +64,13 @@ core.register_node("mymoney:shop", {
 
     on_rightclick = function(pos, node, clicker)
         local name = clicker:get_player_name()
-        local meta = core.get_meta(pos)
+        local meta = minetest.get_meta(pos)
         local owner = meta:get_string("owner")
         local loc = "nodemeta:"..pos.x..","..pos.y..","..pos.z
         mymoney.current_shop[name] = pos 
 
         if name == owner and not clicker:get_player_control().aux1 then
-            core.show_formspec(name, "mymoney:shop_owner", get_shop_bg(10, 11.5) ..
+            minetest.show_formspec(name, "mymoney:shop_owner", get_shop_bg(10, 11.5) ..
                 "label[0.5,0.2;SHOP MANAGEMENT (Owner: "..owner..")]" ..
                 "label[1.5,0.8;STOCK]list["..loc..";stock;0.5,1.2;5,2;]" ..
                 "label[1.5,3.6;PRICES]list["..loc..";prices;0.5,4.0;5,2;]" ..
@@ -94,18 +93,14 @@ core.register_node("mymoney:shop", {
                 local s_stack = inv:get_stack("stock", i)
                 local p_stack = inv:get_stack("prices", i)
                 
-                -- 1. Draw Item for sale
                 form = form .. "item_image["..(0.5+x_off)..","..(y-0.2)..";1,1;"..s_stack:get_name().."]"
                 form = form .. "label["..(0.5+x_off)..","..(y+0.6)..";" .. get_item_desc(s_stack:get_name()) .. "]"
                 
-                -- 2. Draw Price Coin and Count UNDER it
                 form = form .. "item_image["..(2.2+x_off)..","..(y-0.2)..";1,1;"..p_stack:get_name().."]"
                 if not p_stack:is_empty() then
-                    -- Positioned count slightly right to center it under the 1x1 image
                     form = form .. "label["..(2.5+x_off)..","..(y+0.6)..";x" .. p_stack:get_count() .. "]"
                 end
                 
-                -- 3. Buy Button
                 if not s_stack:is_empty() and not p_stack:is_empty() then
                     form = form .. "button["..(3.4+x_off)..","..(y+0.1)..";1.0,0.8;buy_"..i..";BUY]"
                 else
@@ -113,22 +108,20 @@ core.register_node("mymoney:shop", {
                 end
             end
             form = form .. "list[current_player;main;1,7.0;8,4;]"
-            core.show_formspec(name, "mymoney:shop_customer", form)
+            minetest.show_formspec(name, "mymoney:shop_customer", form)
         end
     end,
 })
 
--- Purchase processing logic
-core.register_on_player_receive_fields(function(player, formname, fields)
+minetest.register_on_player_receive_fields(function(player, formname, fields)
     local name = player:get_player_name()
     local pos = mymoney.current_shop[name]
     if not pos or formname ~= "mymoney:shop_customer" then 
-        -- Handles log logic separately
         if fields.view_log then show_sales_log(name, pos) end
-        if fields.clear_log then core.get_meta(pos):set_string("sales_log", "") show_sales_log(name, pos) end
+        if fields.clear_log then minetest.get_meta(pos):set_string("sales_log", "") show_sales_log(name, pos) end
         if fields.back_to_shop then 
-            local node = core.get_node(pos)
-            core.registered_nodes[node.name].on_rightclick(pos, node, player)
+            local node = minetest.get_node(pos)
+            minetest.registered_nodes[node.name].on_rightclick(pos, node, player)
         end
         return 
     end
@@ -137,14 +130,14 @@ core.register_on_player_receive_fields(function(player, formname, fields)
     for i = 1, 10 do if fields["buy_" .. i] then index = i break end end
     if not index then return end
 
-    local meta = core.get_meta(pos)
+    local meta = minetest.get_meta(pos)
     local inv = meta:get_inventory()
     local s_stack = inv:get_stack("stock", index)
     local p_stack = inv:get_stack("prices", index)
     local pinv = player:get_inventory()
 
     if s_stack:is_empty() or not pinv:contains_item("main", p_stack) or not pinv:room_for_item("main", ItemStack(s_stack:get_name())) then
-        core.chat_send_player(name, "Purchase failed!")
+        minetest.chat_send_player(name, "Purchase failed!")
         return
     end
 
@@ -158,13 +151,13 @@ core.register_on_player_receive_fields(function(player, formname, fields)
         local time = os.date("%H:%M")
         local history = meta:get_string("sales_log")
         meta:set_string("sales_log", "["..time.."] "..name.." bought "..get_item_desc(item_to_give:get_name()).."\n" .. history)
-        core.sound_play("default_place_node", {pos=pos, gain=1.0})
+        minetest.sound_play("default_place_node", {pos=pos, gain=1.0})
     end
 
-    local node = core.get_node(pos)
-    core.registered_nodes[node.name].on_rightclick(pos, node, player)
+    local node = minetest.get_node(pos)
+    minetest.registered_nodes[node.name].on_rightclick(pos, node, player)
 end)
-core.register_craft({
+minetest.register_craft({
     output = "mymoney:shop",
     recipe = {
         {"default:obsidian",    "default:glass",         "default:obsidian"},

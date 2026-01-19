@@ -8,7 +8,7 @@ local function get_vending_bg(width, height)
         "gui_bg[;listcolors[#444444ff;#555555ff;#222222ff;#33cc33ff;#cc3333ff]]"
 end
 
-core.register_node("mymoney:vending", {
+minetest.register_node("mymoney:vending", {
     description = "Vending Machine",
     tiles = {
         "mymoney_vending_machine.png"
@@ -24,7 +24,7 @@ core.register_node("mymoney:vending", {
 		}
 	},
     after_place_node = function(pos, placer)
-        local meta = core.get_meta(pos)
+        local meta = minetest.get_meta(pos)
         local inv = meta:get_inventory()
         meta:set_string("owner", placer:get_player_name())
         meta:set_string("infotext", "Vending Machine (Owner: " .. placer:get_player_name() .. ")")
@@ -35,17 +35,17 @@ core.register_node("mymoney:vending", {
     end,
 
     can_dig = function(pos, player)
-        local meta = core.get_meta(pos)
+        local meta = minetest.get_meta(pos)
         local inv = meta:get_inventory()
         local name = player:get_player_name()
 
         if name ~= meta:get_string("owner") then
-            core.chat_send_player(name, "Only the owner can dig this machine!")
+            minetest.chat_send_player(name, "Only the owner can dig this machine!")
             return false
         end
 
         if not inv:is_empty("stock") or not inv:is_empty("earnings") or not inv:is_empty("price") then
-            core.chat_send_player(name, "Machine must be empty before digging!")
+            minetest.chat_send_player(name, "Machine must be empty before digging!")
             return false
         end
         return true
@@ -53,14 +53,14 @@ core.register_node("mymoney:vending", {
 
     on_rightclick = function(pos, node, clicker)
         local name = clicker:get_player_name()
-        local meta = core.get_meta(pos)
+        local meta = minetest.get_meta(pos)
         local owner = meta:get_string("owner")
         local loc = "nodemeta:"..pos.x..","..pos.y..","..pos.z
 
         mymoney.shop.current_shop[name] = pos
 
         if name == owner and not clicker:get_player_control().aux1 then
-            core.show_formspec(name, "mymoney:vending_owner",
+            minetest.show_formspec(name, "mymoney:vending_owner",
                 get_vending_bg(9, 11) ..
                 "label[0.5,0.5;VENDING SETUP (Owner)]" ..
                 "label[1,1.2;1. Price (Single Coin):]" ..
@@ -93,13 +93,13 @@ core.register_node("mymoney:vending", {
                 price_desc = price_stack:get_count() .. "x " .. (price_stack:get_definition().description or price_stack:get_name())
             end
 
-            core.show_formspec(name, "mymoney:vending_customer",
+            minetest.show_formspec(name, "mymoney:vending_customer",
                 get_vending_bg(9, 10.5) ..
                 "label[3.0,0.5;VENDING MACHINE]" ..
                 "box[0.8,1.2;3.2,2.4;#444444ff]" ..
                 "label[1.0,1.3;Item for Sale:]" ..
                 "item_image[1.9,1.8;1.2,1.2;"..stock_stack:get_name().."]" ..
-                "label[0.9,3.1;"..core.formspec_escape(item_desc).."]" ..
+                "label[0.9,3.1;"..minetest.formspec_escape(item_desc).."]" ..
                 
                 "box[4.5,1.2;3.7,2.4;#444444ff]" ..
                 "label[4.7,1.3;Price:]" ..
@@ -115,7 +115,7 @@ core.register_node("mymoney:vending", {
     end,
 })
 
-core.register_on_player_receive_fields(function(player, formname, fields)
+minetest.register_on_player_receive_fields(function(player, formname, fields)
     if formname ~= "mymoney:vending_customer" then return end
     if fields.quit then return end
 
@@ -124,11 +124,11 @@ core.register_on_player_receive_fields(function(player, formname, fields)
         local pos = mymoney.shop.current_shop[name]
         
         if not pos then 
-            core.chat_send_player(name, "Error: Vending machine position lost. Re-open it.")
+            minetest.chat_send_player(name, "Error: Vending machine position lost. Re-open it.")
             return 
         end
         
-        local meta = core.get_meta(pos)
+        local meta = minetest.get_meta(pos)
         local inv = meta:get_inventory()
         local pinv = player:get_inventory()
         
@@ -144,25 +144,25 @@ core.register_on_player_receive_fields(function(player, formname, fields)
         end
 
         if first_stock_idx == 0 then
-            core.chat_send_player(name, "Machine is out of stock!")
+            minetest.chat_send_player(name, "Machine is out of stock!")
             return
         end
 
         local stock_stack = inv:get_stack("stock", first_stock_idx)
 
         if not pinv:contains_item("main", price_stack) then
-            core.chat_send_player(name, "Insufficient funds! You need " .. price_stack:get_count() .. " coins.")
+            minetest.chat_send_player(name, "Insufficient funds! You need " .. price_stack:get_count() .. " coins.")
             return
         end
 
         if not inv:room_for_item("earnings", price_stack) then
-            core.chat_send_player(name, "Machine is full of money!")
+            minetest.chat_send_player(name, "Machine is full of money!")
             return
         end
 
         local purchase_item = ItemStack(stock_stack:get_name())
         if not pinv:room_for_item("main", purchase_item) then
-            core.chat_send_player(name, "Your inventory is full!")
+            minetest.chat_send_player(name, "Your inventory is full!")
             return
         end
 
@@ -177,14 +177,14 @@ core.register_on_player_receive_fields(function(player, formname, fields)
             mymoney.log_transaction(purchase_item:get_name())
         end
 
-        core.sound_play("default_place_node_metal", {pos=pos, gain=1.0})
-        core.chat_send_player(name, "Purchase successful!")
+        minetest.sound_play("default_place_node_metal", {pos=pos, gain=1.0})
+        minetest.chat_send_player(name, "Purchase successful!")
         
-        local node = core.get_node(pos)
-        core.registered_nodes[node.name].on_rightclick(pos, node, player)
+        local node = minetest.get_node(pos)
+        minetest.registered_nodes[node.name].on_rightclick(pos, node, player)
     end
 end)
-core.register_craft({
+minetest.register_craft({
     output = "mymoney:vending_machine",
     recipe = {
         {"default:steel_ingot", "default:glass",       "default:steel_ingot"},
