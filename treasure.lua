@@ -26,7 +26,7 @@ minetest.register_node("mymoney:treasure_chest", {
                 minacc = {x=0, y=-9, z=0}, maxacc = {x=0, y=-9, z=0},
                 minexptime = 1, maxexptime = 2,
                 minsize = 1, maxsize = 3,
-                texture = "mymoney_coin_gold_1.png",
+                texture = "mymoney_coin.png",
             })
 
             minetest.remove_node(pos)
@@ -43,7 +43,7 @@ minetest.register_decoration({
     noise_params = {
         offset = 0.0001,
         scale = 0.001,
-        spread = {x=200, y=200, z=200},
+        spread = {x=2000, y=2000, z=2000},
         seed = 543,
         octaves = 3,
         persist = 0.6
